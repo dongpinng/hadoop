@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- classpath:mapper/ProjectMapper.xml -->
+<mapper namespace="com.xj.original.dao.QueryDao2">
+	<select id="getXjData" resultType="com.xj.original.entity.QueryResponse">
+		select a.time,a.pv,a.uv,b.uv orderUV,e.uv newUV from
+		(SELECT
+		SUBSTR(CREATE_TIME FROM 1 FOR 10) time,
+		count(*) pv,
+		count(DISTINCT userid) uv
+		FROM
+		gzbc_xjcartoon_log_page_tab
+		WHERE
+		NEXT_PAGE = 'springRecommendPage_exitReommend20170909'
+		AND create_time BETWEEN #{0}
+		AND #{1} GROUP BY SUBSTR(CREATE_TIME, 1, 10)) a
+		LEFT JOIN (
+		SELECT
+		count(*) uv,
+		SUBSTR(a.CREATE_TIME, 1, 10) time
+		FROM
+		`gzbc_xjcartoon_log_page_tab` a
+		WHERE
+		PREV_PAGE = 'springRecommendPage_exitReommend20170909'
+		AND NEXT_PAGE = 'gameDetail'
+		AND substr(CREATE_TIME, 1, 10) BETWEEN #{0}
+		AND #{1}
+		AND userid IN (
+		SELECT DISTINCT
+		userid
+		FROM
+		gzbc_app_log_charge g
+		WHERE
+		substr(TIME, 1, 10) BETWEEN #{0}
+		AND #{1}
+		AND DATE(g.time) = DATE(CREATE_TIME)
+		)
+		GROUP BY SUBSTR(a.CREATE_TIME, 1, 10)
+		) b on a.time = b.time
+		left join (SELECT
+		count(DISTINCT USERID) uv,SUBSTR(d.CREATE_TIME,1,10) time
+		FROM
+		gzbc_xjcartoon_user_tab d
+		WHERE
+		CREATE_TIME BETWEEN #{0} and #{1}
+		AND USERID NOT IN (
+		SELECT DISTINCT
+		userid
+		FROM
+		gzbc_xjcartoon_user_tab
+		WHERE
+		CREATE_TIME &lt; d.CREATE_TIME
+		and userid in (
+		select userid from
+		gzbc_xjcartoon_log_page_tab
+		WHERE
+		next_PAGE = 'springRecommendPage_exitReommend20170909' and create_time BETWEEN
+		#{0}
+		AND #{1}
+		)
+		) GROUP BY SUBSTR(d.CREATE_TIME,1,10)) e on e.time = a.time
+	</select>
+</mapper>

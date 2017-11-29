@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- classpath:mapper/ProjectMapper.xml -->
+<mapper namespace="com.xj.common.dao.QueryDao">
+	<select id="getXjData" parameterType="com.xj.common.entity.QueryPojo"
+		resultType="com.xj.common.entity.QueryResponse">
+		SELECT
+		c.userid ,
+		c.x counts
+		FROM
+		(
+		SELECT
+		count(*) x,
+		b.phoneNum userid,
+		substr(createTime, 1, 10) time
+		FROM
+		jsyd_order_baoyue a,
+		(
+		SELECT DISTINCT
+		phoneNum
+		FROM
+		jsyd_order_baoyue
+		WHERE
+		productid = #{product}
+		AND orderstate = 1
+		AND createTime BETWEEN #{start_time}
+		AND #{end_time}
+		) b
+		WHERE
+		a.phoneNum = b.phoneNum
+		AND orderstate = 1
+		AND productid = #{product}
+		AND
+		createTime BETWEEN #{start_time}
+		AND #{end_time}
+		GROUP BY
+		b.phoneNum
+		ORDER BY
+		x DESC
+		) c
+		ORDER BY
+		c.time asc
+	</select>
+</mapper>
